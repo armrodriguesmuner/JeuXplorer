@@ -21,7 +21,7 @@ Ce système est **réutilisable** : il suffit de changer le fichier de contexte 
 1. Ouvrir **WSL** (Windows Subsystem for Linux)
 2. Aller dans ce dossier :
    ```
-   cd /mnt/c/Users/Professionnnel/Documents/00_ProjetAgent_Restrict
+   cd /mnt/c/Users/[votre-nom-utilisateur]/Documents/[nom-du-dossier-projet]
    ```
 3. Lancer Claude :
    ```
@@ -53,7 +53,7 @@ memory/          — Mémoire partagée entre agents
 
 ## Projet actif
 
-**Projet actif : `memory/contexte_projet_JeuXplorer.md`**
+**Projet actif : voir la ligne "Projet actif" dans CLAUDE.md**
 
 Ce fichier contient la description du projet en cours, les personas, les décisions prises et les livrables existants. L'agent le lit en priorité à chaque démarrage.
 
