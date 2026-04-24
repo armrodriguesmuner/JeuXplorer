@@ -1,4 +1,4 @@
-# LienSocial — Contexte global du projet
+# JeuXplorer — Contexte global du projet
 
 ## Description du projet
 

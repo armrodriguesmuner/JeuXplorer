@@ -1,4 +1,4 @@
-# LienSocial
+# JeuXplorer
 
 Application mobile (Android & iOS) de lien social gamifiée basée sur des interactions physiques réelles.
 
