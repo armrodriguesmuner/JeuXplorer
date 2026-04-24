@@ -1,35 +1,49 @@
-# JeuXplorer — Contexte global du projet
+# Système multi-agents — Configuration universelle
 
-## Description du projet
+## Profil utilisateur
 
-Application mobile (Android & iOS) de lien social gamifiée. Les utilisateurs gagnent des points en réalisant des interactions physiques réelles : scan mutuel de QR codes, rencontres validées, territoire revendiqué dans la ville. L'objectif est de réduire l'isolement social de manière subtile et ludique, sans que l'application ne ressemble à un réseau social ou une app de rencontre.
+- **Non-technicien** : pas de bagage en développement logiciel.
+- **Testeur fonctionnel** : raisonne en comportements attendus, scénarios d'usage et résultats observables.
+- **Guidé pas à pas** : une question à la fois, validation à chaque étape avant d'avancer. Ne pas surcharger.
+- **Communication** : français uniquement sauf demande contraire. Zéro jargon technique sans explication préalable.
 
-**Identité utilisateur** : anonyme ("Agent XXX") — pas de photo, pas de genre, pas de nom réel.  
-**Public cible** : 18–30 ans, âge minimum 18 ans.  
-**Lancement** : une ville pilote, puis France, puis international.  
-**Langue** : français, structure prête pour l'anglais.
+---
 
-## Agents du projet
+## Fonctionnement du système multi-agents
 
-Les agents sont définis dans le dossier `agents/`. Chaque agent a son propre fichier de définition.
+Ce projet est géré par une chaîne d'agents spécialisés. Chaque agent a un rôle précis et produit des livrables exploitables par le suivant.
 
-| Agent | Fichier | Rôle |
-|---|---|---|
-| Méthode & Besoin | `agents/discovery/methode_besoin.md` | Formalisation du besoin, CDCF, user stories, critères d'acceptation |
-| *(à venir)* | `agents/_base/` | Agents futurs (Architecture, Développement, Test…) |
-
-## Structure du projet
+**Structure des dossiers :**
 
 ```
-agents/          — Définitions des agents IA
-livrables/       — Documents produits par les agents
-memory/          — Mémoire partagée (contexte projet, décisions clés)
+agents/          — Définitions des agents (instructions, rôle, méthode)
+  discovery/     — Agent Méthode & Besoin
+  _base/         — Ressources partagées entre agents
+livrables/       — Documents produits par les agents (markdown)
+memory/          — Mémoire partagée : contexte projet et décisions clés
 ```
 
-## Livrables de référence
+**Chaîne des agents (ordre d'intervention) :**
 
-- `livrables/besoin/note_de_cadrage.md` — v0001 validée le 24/04/2026
+| Ordre | Agent | Dossier | Rôle |
+|---|---|---|---|
+| 1 | Méthode & Besoin | `agents/discovery/` | Formalisation du besoin, CDCF, user stories, critères d'acceptation |
+| 2 | Architecture | *(à venir)* | Choix techniques, structure de l'application |
+| 3 | Développement | *(à venir)* | Implémentation |
+| 4 | Test | *(à venir)* | Validation fonctionnelle |
 
-## Langue de travail
+---
 
-Français par défaut. Toute communication avec l'utilisateur se fait en français.
+## Projet actif
+
+**Projet actif : `memory/contexte_projet_JeuXplorer.md`**
+
+---
+
+## Règles de fonctionnement
+
+1. **Lire le projet actif en premier** : avant toute action ou réponse, lire le fichier défini par "Projet actif" ci-dessus pour connaître le contexte, les décisions prises et les livrables existants.
+2. **Ne jamais supposer** : tout ce qui n'est pas dans les fichiers doit être demandé à l'utilisateur.
+3. **Un livrable à la fois** : produire, soumettre à validation, puis passer au suivant.
+4. **Traçabilité** : chaque livrable est versionné (v0001, v0002…) avec date et historique des modifications.
+5. **Langue** : français par défaut dans tous les livrables et toutes les communications.
