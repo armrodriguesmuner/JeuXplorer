@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>JeuXplorer — Prototype</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #fff;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #header {
+      padding: 14px 16px;
+      background: #1a1d27;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #2d3148;
+      flex-shrink: 0;
+    }
+
+    #header h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #fff;
+    }
+
+    #points-display {
+      background: #2d3148;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    #points-value { color: #8b7cf8; }
+
+    #map { flex: 1; z-index: 1; }
+
+    #footer {
+      padding: 18px 16px 24px;
+      background: #1a1d27;
+      border-top: 1px solid #2d3148;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    #btn-capturer {
+      background: #8b7cf8;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 18px 0;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      width: 100%;
+      max-width: 340px;
+      transition: background 0.15s, transform 0.1s;
+      box-shadow: 0 4px 20px rgba(139, 124, 248, 0.4);
+    }
+
+    #btn-capturer:active {
+      transform: scale(0.96);
+      background: #6f5ee0;
+    }
+
+    #btn-capturer:disabled {
+      background: #3a3a5c;
+      box-shadow: none;
+      cursor: not-allowed;
+      color: #888;
+    }
+
+    #status {
+      font-size: 13px;
+      color: #777;
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 110px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: #8b7cf8;
+      color: white;
+      padding: 13px 28px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 16px;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: 0 6px 24px rgba(139,124,248,0.5);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="header">
+    <h1>JeuXplorer</h1>
+    <div id="points-display">⚡ <span id="points-value">0</span> pts</div>
+  </div>
+
+  <div id="map"></div>
+
+  <div id="footer">
+    <button id="btn-capturer" disabled>Capturer</button>
+    <div id="status">Chargement du GPS…</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const RAYON_METRES = 100;
+    const POINTS_PAR_CAPTURE = 10;
+
+    let points = 0;
+    let map = null;
+    let positionMarker = null;
+    let precisionCercle = null;
+    let zones = [];
+    let currentLat = null;
+    let currentLng = null;
+    let carteInitialisee = false;
+
+    // --- Carte ---
+    map = L.map('map', {
+      zoomControl: true,
+      attributionControl: false
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    // --- Icône joueur ---
+    const playerIcon = L.divIcon({
+      className: '',
+      html: `<div style="
+        width: 18px; height: 18px;
+        background: #8b7cf8;
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba(139,124,248,0.3), 0 0 12px rgba(139,124,248,0.6);
+      "></div>`,
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
+    });
+
+    // --- Toast ---
+    function afficherToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // --- Points ---
+    function ajouterPoints(val) {
+      points += val;
+      document.getElementById('points-value').textContent = points;
+    }
+
+    // --- Vérifier si déjà dans une zone ---
+    function dansUneZoneExistante(lat, lng) {
+      return zones.some(z => {
+        const dist = map.distance([lat, lng], [z.lat, z.lng]);
+        return dist < RAYON_METRES;
+      });
+    }
+
+    // --- Capturer ---
+    function capturer(lat, lng) {
+      if (dansUneZoneExistante(lat, lng)) {
+        afficherToast('Déjà capturé ici');
+        return;
+      }
+
+      L.circle([lat, lng], {
+        radius: RAYON_METRES,
+        color: '#8b7cf8',
+        fillColor: '#8b7cf8',
+        fillOpacity: 0.12,
+        weight: 2
+      }).addTo(map);
+
+      zones.push({ lat, lng });
+      ajouterPoints(POINTS_PAR_CAPTURE);
+
+      const nb = zones.length;
+      document.getElementById('status').textContent =
+        `${nb} zone${nb > 1 ? 's' : ''} capturée${nb > 1 ? 's' : ''}`;
+
+      afficherToast(`+${POINTS_PAR_CAPTURE} pts — Zone capturée !`);
+    }
+
+    // --- GPS ---
+    if (!navigator.geolocation) {
+      document.getElementById('status').textContent = 'GPS non disponible sur cet appareil';
+    } else {
+      navigator.geolocation.watchPosition(
+        function(pos) {
+          currentLat = pos.coords.latitude;
+          currentLng = pos.coords.longitude;
+          const precision = pos.coords.accuracy;
+
+          if (!carteInitialisee) {
+            map.setView([currentLat, currentLng], 17);
+            positionMarker = L.marker([currentLat, currentLng], { icon: playerIcon }).addTo(map);
+            precisionCercle = L.circle([currentLat, currentLng], {
+              radius: precision,
+              color: '#8b7cf8',
+              fillColor: '#8b7cf8',
+              fillOpacity: 0.05,
+              weight: 1,
+              dashArray: '4 4'
+            }).addTo(map);
+            carteInitialisee = true;
+            document.getElementById('btn-capturer').disabled = false;
+            document.getElementById('status').textContent = 'Prêt — appuyez pour capturer';
+          } else {
+            positionMarker.setLatLng([currentLat, currentLng]);
+            precisionCercle.setLatLng([currentLat, currentLng]);
+            precisionCercle.setRadius(precision);
+          }
+        },
+        function(err) {
+          document.getElementById('status').textContent =
+            'Autorisez la localisation pour jouer';
+          document.getElementById('btn-capturer').disabled = true;
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 3000,
+          timeout: 15000
+        }
+      );
+    }
+
+    // --- Bouton ---
+    document.getElementById('btn-capturer').addEventListener('click', function() {
+      if (currentLat !== null) {
+        capturer(currentLat, currentLng);
+      }
+    });
+  </script>
+</body>
+</html>
