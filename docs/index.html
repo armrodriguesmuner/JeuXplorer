@@ -24,6 +24,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 0 16px;
+      gap: 10px;
       z-index: 1000;
     }
 
@@ -31,14 +32,47 @@
       font-size: 20px;
       font-weight: 800;
       letter-spacing: 1px;
+      flex: 1;
+    }
+
+    #btn-toggle-zones {
+      background: #2d3148;
+      border: none;
+      border-radius: 10px;
+      width: 38px;
+      height: 38px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    #btn-toggle-zones:active { background: #3d4168; }
+
+    #btn-toggle-zones svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: #8b7cf8;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: opacity 0.2s;
+    }
+
+    #btn-toggle-zones.masque svg {
+      stroke: #555;
     }
 
     #points-display {
       background: #2d3148;
-      padding: 7px 16px;
+      padding: 7px 14px;
       border-radius: 20px;
       font-size: 15px;
       font-weight: 700;
+      flex-shrink: 0;
     }
 
     #points-value { color: #8b7cf8; }
@@ -125,6 +159,22 @@
 
   <div id="header">
     <h1>JeuXplorer</h1>
+
+    <!-- Bouton afficher / masquer les zones -->
+    <button id="btn-toggle-zones" title="Afficher / masquer les zones">
+      <!-- Icône œil ouvert -->
+      <svg id="icon-eye" viewBox="0 0 24 24">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      <!-- Icône œil barré (masqué) -->
+      <svg id="icon-eye-off" viewBox="0 0 24 24" style="display:none">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+        <line x1="1" y1="1" x2="23" y2="23"/>
+      </svg>
+    </button>
+
     <div id="points-display">⚡ <span id="points-value">0</span> pts</div>
   </div>
 
@@ -141,24 +191,25 @@
   <script>
     const RAYON_METRES = 100;
     const POINTS_PAR_CAPTURE = 10;
+    const STORAGE_KEY = 'jeuxplorer_zones';
 
     let points = 0;
     let positionMarker = null;
     let precisionCercle = null;
-    let zones = [];
+    let zones = [];        // { lat, lng }
+    let zonesVisibles = true;
     let currentLat = null;
     let currentLng = null;
     let carteInitialisee = false;
 
     // --- Carte ---
     const map = L.map('map', { zoomControl: true, attributionControl: false });
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-    }).addTo(map);
-
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     map.setView([48.8566, 2.3522], 13);
     map.invalidateSize();
+
+    // Layer group pour toutes les zones capturées
+    const zonesLayer = L.layerGroup().addTo(map);
 
     // --- Icône joueur ---
     const playerIcon = L.divIcon({
@@ -188,6 +239,42 @@
       document.getElementById('points-value').textContent = points;
     }
 
+    // --- Dessiner une zone sur la carte ---
+    function dessinerZone(lat, lng) {
+      L.circle([lat, lng], {
+        radius: RAYON_METRES,
+        color: '#8b7cf8',
+        fillColor: '#8b7cf8',
+        fillOpacity: 0.15,
+        weight: 2
+      }).addTo(zonesLayer);
+    }
+
+    // --- Sauvegarder les zones ---
+    function sauvegarder() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(zones));
+    }
+
+    // --- Charger les zones sauvegardées ---
+    function chargerZones() {
+      const sauvegarde = localStorage.getItem(STORAGE_KEY);
+      if (!sauvegarde) return;
+      try {
+        const data = JSON.parse(sauvegarde);
+        data.forEach(z => {
+          zones.push(z);
+          dessinerZone(z.lat, z.lng);
+          points += POINTS_PAR_CAPTURE;
+        });
+        document.getElementById('points-value').textContent = points;
+        const nb = zones.length;
+        if (nb > 0) {
+          document.getElementById('status').textContent =
+            `${nb} zone${nb > 1 ? 's' : ''} capturée${nb > 1 ? 's' : ''} — GPS en cours…`;
+        }
+      } catch(e) {}
+    }
+
     // --- Anti-doublon ---
     function dansUneZoneExistante(lat, lng) {
       return zones.some(z => map.distance([lat, lng], [z.lat, z.lng]) < RAYON_METRES);
@@ -199,16 +286,9 @@
         afficherToast('Déjà capturé ici');
         return;
       }
-
-      L.circle([lat, lng], {
-        radius: RAYON_METRES,
-        color: '#8b7cf8',
-        fillColor: '#8b7cf8',
-        fillOpacity: 0.15,
-        weight: 2
-      }).addTo(map);
-
+      dessinerZone(lat, lng);
       zones.push({ lat, lng });
+      sauvegarder();
       ajouterPoints(POINTS_PAR_CAPTURE);
 
       const nb = zones.length;
@@ -217,6 +297,22 @@
 
       afficherToast(`+${POINTS_PAR_CAPTURE} pts — Zone capturée !`);
     }
+
+    // --- Toggle zones ---
+    document.getElementById('btn-toggle-zones').addEventListener('click', function() {
+      zonesVisibles = !zonesVisibles;
+      if (zonesVisibles) {
+        map.addLayer(zonesLayer);
+        document.getElementById('icon-eye').style.display = '';
+        document.getElementById('icon-eye-off').style.display = 'none';
+        this.classList.remove('masque');
+      } else {
+        map.removeLayer(zonesLayer);
+        document.getElementById('icon-eye').style.display = 'none';
+        document.getElementById('icon-eye-off').style.display = '';
+        this.classList.add('masque');
+      }
+    });
 
     // --- GPS ---
     if (!navigator.geolocation) {
@@ -240,7 +336,11 @@
             }).addTo(map);
             carteInitialisee = true;
             document.getElementById('btn-capturer').disabled = false;
-            document.getElementById('status').textContent = 'Prêt — appuyez pour capturer';
+            const nb = zones.length;
+            document.getElementById('status').textContent =
+              nb > 0
+                ? `${nb} zone${nb > 1 ? 's' : ''} capturée${nb > 1 ? 's' : ''}`
+                : 'Prêt — appuyez pour capturer';
           } else {
             positionMarker.setLatLng([currentLat, currentLng]);
             precisionCercle.setLatLng([currentLat, currentLng]);
@@ -255,10 +355,13 @@
       );
     }
 
-    // --- Bouton ---
+    // --- Bouton Capturer ---
     document.getElementById('btn-capturer').addEventListener('click', function() {
       if (currentLat !== null) capturer(currentLat, currentLng);
     });
+
+    // --- Charger les zones au démarrage ---
+    chargerZones();
   </script>
 </body>
 </html>
