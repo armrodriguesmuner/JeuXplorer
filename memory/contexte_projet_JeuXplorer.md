@@ -24,6 +24,8 @@ Application en français, structure prête pour l'anglais dès la v1.
 | Agent | Fichier | Statut |
 |---|---|---|
 | Méthode & Besoin | `agents/discovery/methode_besoin.md` | En cours |
+| Chercheur Expert Jeux | `agents/discovery/chercheur_expert_jeux.md` | Actif |
+| Innovant Game Systems | `agents/discovery/innovant_game_systems.md` | Actif |
 | Architecture | *(à venir)* | — |
 | Développement | *(à venir)* | — |
 | Test | *(à venir)* | — |
@@ -32,7 +34,7 @@ Application en français, structure prête pour l'anglais dès la v1.
 
 | Livrable | Fichier | Version | Date |
 |---|---|---|---|
-| Note de cadrage | `livrables/besoin/note_de_cadrage.md` | v0001 | 24/04/2026 |
+| Note de cadrage | `livrables/besoin/note_de_cadrage.md` | v0003 | 29/04/2026 |
 
 ## Points ouverts (à affiner)
 
