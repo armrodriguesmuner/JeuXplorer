@@ -52,6 +52,18 @@ Historique des décisions structurantes prises au fil du projet.
 
 ---
 
+## Phase 1 — Prototype v0001 (12/05/2026)
+
+| # | Date | Décision |
+|---|---|---|
+| 30 | 12/05/2026 | **Pivot prototype** : arrêt du travail sur le narratif — priorité donnée à la mécanique de base testable sur téléphone |
+| 31 | 12/05/2026 | **Mécanique MVP** : bouton unique → zone GPS de 100 m (rayon paramétrable) → +10 pts (valeur à ajuster après test) |
+| 32 | 12/05/2026 | **Technologie prototype** : application web HTML/JS (Leaflet.js + API Geolocation) — testable dans Chrome Android sans installation |
+| 33 | 12/05/2026 | **Hébergement** : GitHub Pages — dépôt `armrodriguesmuner/JeuXplorer`, dossier `/docs` |
+| 34 | 12/05/2026 | **Règle anti-doublon** : une zone ne peut pas être capturée si le joueur est déjà dans une zone existante (rayon < 100 m) |
+
+---
+
 ## Phase 1 — Exploration active (01/05/2026)
 
 | # | Date | Décision |

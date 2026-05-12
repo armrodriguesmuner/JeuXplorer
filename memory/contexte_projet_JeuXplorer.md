@@ -19,6 +19,17 @@ Anonyme ("Agent XXX") — pas de photo, pas de genre, pas de nom réel.
 Une ville pilote (à définir) → France → international.  
 Application en français, structure prête pour l'anglais dès la v1.
 
+## Prototype
+
+| Élément | Détail |
+|---|---|
+| Dépôt GitHub | https://github.com/armrodriguesmuner/JeuXplorer |
+| Application en ligne | https://armrodriguesmuner.github.io/JeuXplorer/ |
+| Technologie | Application web (HTML / JS / Leaflet.js) — testable dans Chrome Android |
+| Mécanique implémentée | Bouton Capturer → zone GPS 100 m → +10 pts |
+| Rayon | 100 m (paramétrable) |
+| Statut | Prototype v0001 — déployé le 12/05/2026 |
+
 ## Agents actifs sur ce projet
 
 | Agent | Fichier | Statut |
@@ -34,7 +45,8 @@ Application en français, structure prête pour l'anglais dès la v1.
 
 | Livrable | Fichier | Version | Date |
 |---|---|---|---|
-| Note de cadrage | `livrables/besoin/note_de_cadrage.md` | v0003 | 29/04/2026 |
+| Note de cadrage | `livrables/besoin/note_de_cadrage.md` | v0004 | 01/05/2026 |
+| Prototype web | `docs/index.html` | v0001 | 12/05/2026 |
 
 ## Points ouverts (à affiner)
 
