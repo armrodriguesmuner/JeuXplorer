@@ -157,6 +157,9 @@
       maxZoom: 19
     }).addTo(map);
 
+    // Vue par défaut pendant le chargement du GPS
+    map.setView([48.8566, 2.3522], 13);
+
     // --- Icône joueur ---
     const playerIcon = L.divIcon({
       className: '',
