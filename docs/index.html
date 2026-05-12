@@ -12,27 +12,25 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #0f1117;
       color: #fff;
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
     }
 
     #header {
-      padding: 14px 16px;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 54px;
       background: #1a1d27;
+      border-bottom: 1px solid #2d3148;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #2d3148;
-      flex-shrink: 0;
+      padding: 0 16px;
+      z-index: 1000;
     }
 
     #header h1 {
       font-size: 20px;
       font-weight: 800;
       letter-spacing: 1px;
-      color: #fff;
     }
 
     #points-display {
@@ -45,17 +43,26 @@
 
     #points-value { color: #8b7cf8; }
 
-    #map { flex: 1; z-index: 1; }
+    #map {
+      position: fixed;
+      top: 54px;
+      left: 0; right: 0;
+      bottom: 100px;
+      z-index: 1;
+    }
 
     #footer {
-      padding: 18px 16px 24px;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 100px;
       background: #1a1d27;
       border-top: 1px solid #2d3148;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
+      justify-content: center;
+      gap: 8px;
+      z-index: 1000;
     }
 
     #btn-capturer {
@@ -63,15 +70,14 @@
       color: white;
       border: none;
       border-radius: 50px;
-      padding: 18px 0;
+      padding: 14px 0;
       font-size: 18px;
       font-weight: 800;
-      letter-spacing: 0.5px;
       cursor: pointer;
-      width: 100%;
+      width: calc(100% - 32px);
       max-width: 340px;
-      transition: background 0.15s, transform 0.1s;
       box-shadow: 0 4px 20px rgba(139, 124, 248, 0.4);
+      transition: background 0.15s, transform 0.1s;
     }
 
     #btn-capturer:active {
@@ -82,27 +88,25 @@
     #btn-capturer:disabled {
       background: #3a3a5c;
       box-shadow: none;
-      cursor: not-allowed;
       color: #888;
     }
 
     #status {
-      font-size: 13px;
+      font-size: 12px;
       color: #777;
-      text-align: center;
     }
 
     .toast {
       position: fixed;
-      bottom: 110px;
+      bottom: 120px;
       left: 50%;
       transform: translateX(-50%) translateY(10px);
       background: #8b7cf8;
       color: white;
-      padding: 13px 28px;
+      padding: 12px 26px;
       border-radius: 14px;
       font-weight: 700;
-      font-size: 16px;
+      font-size: 15px;
       z-index: 9999;
       opacity: 0;
       transition: opacity 0.25s, transform 0.25s;
@@ -139,7 +143,6 @@
     const POINTS_PAR_CAPTURE = 10;
 
     let points = 0;
-    let map = null;
     let positionMarker = null;
     let precisionCercle = null;
     let zones = [];
@@ -148,27 +151,24 @@
     let carteInitialisee = false;
 
     // --- Carte ---
-    map = L.map('map', {
-      zoomControl: true,
-      attributionControl: false
-    });
+    const map = L.map('map', { zoomControl: true, attributionControl: false });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19
     }).addTo(map);
 
-    // Vue par défaut pendant le chargement du GPS
     map.setView([48.8566, 2.3522], 13);
+    map.invalidateSize();
 
     // --- Icône joueur ---
     const playerIcon = L.divIcon({
       className: '',
       html: `<div style="
-        width: 18px; height: 18px;
-        background: #8b7cf8;
-        border: 3px solid white;
-        border-radius: 50%;
-        box-shadow: 0 0 0 4px rgba(139,124,248,0.3), 0 0 12px rgba(139,124,248,0.6);
+        width:18px;height:18px;
+        background:#8b7cf8;
+        border:3px solid white;
+        border-radius:50%;
+        box-shadow:0 0 0 4px rgba(139,124,248,0.3),0 0 12px rgba(139,124,248,0.6);
       "></div>`,
       iconSize: [18, 18],
       iconAnchor: [9, 9]
@@ -188,12 +188,9 @@
       document.getElementById('points-value').textContent = points;
     }
 
-    // --- Vérifier si déjà dans une zone ---
+    // --- Anti-doublon ---
     function dansUneZoneExistante(lat, lng) {
-      return zones.some(z => {
-        const dist = map.distance([lat, lng], [z.lat, z.lng]);
-        return dist < RAYON_METRES;
-      });
+      return zones.some(z => map.distance([lat, lng], [z.lat, z.lng]) < RAYON_METRES);
     }
 
     // --- Capturer ---
@@ -207,7 +204,7 @@
         radius: RAYON_METRES,
         color: '#8b7cf8',
         fillColor: '#8b7cf8',
-        fillOpacity: 0.12,
+        fillOpacity: 0.15,
         weight: 2
       }).addTo(map);
 
@@ -223,19 +220,18 @@
 
     // --- GPS ---
     if (!navigator.geolocation) {
-      document.getElementById('status').textContent = 'GPS non disponible sur cet appareil';
+      document.getElementById('status').textContent = 'GPS non disponible';
     } else {
       navigator.geolocation.watchPosition(
         function(pos) {
           currentLat = pos.coords.latitude;
           currentLng = pos.coords.longitude;
-          const precision = pos.coords.accuracy;
 
           if (!carteInitialisee) {
             map.setView([currentLat, currentLng], 17);
             positionMarker = L.marker([currentLat, currentLng], { icon: playerIcon }).addTo(map);
             precisionCercle = L.circle([currentLat, currentLng], {
-              radius: precision,
+              radius: pos.coords.accuracy,
               color: '#8b7cf8',
               fillColor: '#8b7cf8',
               fillOpacity: 0.05,
@@ -248,27 +244,20 @@
           } else {
             positionMarker.setLatLng([currentLat, currentLng]);
             precisionCercle.setLatLng([currentLat, currentLng]);
-            precisionCercle.setRadius(precision);
+            precisionCercle.setRadius(pos.coords.accuracy);
           }
         },
-        function(err) {
-          document.getElementById('status').textContent =
-            'Autorisez la localisation pour jouer';
+        function() {
+          document.getElementById('status').textContent = 'Autorisez la localisation pour jouer';
           document.getElementById('btn-capturer').disabled = true;
         },
-        {
-          enableHighAccuracy: true,
-          maximumAge: 3000,
-          timeout: 15000
-        }
+        { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
       );
     }
 
     // --- Bouton ---
     document.getElementById('btn-capturer').addEventListener('click', function() {
-      if (currentLat !== null) {
-        capturer(currentLat, currentLng);
-      }
+      if (currentLat !== null) capturer(currentLat, currentLng);
     });
   </script>
 </body>
